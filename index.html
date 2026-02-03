@@ -3,109 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大学生向け：読書感想文ジェネレーター</title>
+    <title>一行感想ガチャ・極</title>
     <style>
         :root {
-            --primary: #2c3e50;
-            --accent: #3498db;
-            --bg: #f4f7f6;
+            --primary: #30336b;
+            --accent: #eb4d4b;
+            --bg: #f0f2f5;
         }
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg); color: #333; line-height: 1.6; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: var(--primary); border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+        body { font-family: 'Helvetica Neue', 'Arial', 'Hiragino Sans', sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 10px; }
+        .card { background: white; width: 100%; max-width: 500px; padding: 25px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header h1 { font-size: 1.2rem; color: var(--primary); margin: 0; }
+        .count-badge { background: #eee; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; }
+
         .input-group { margin-bottom: 15px; }
-        label { font-weight: bold; display: block; margin-bottom: 5px; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 18px; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        button:hover { background: #2980b9; }
-        #editor-container { margin-top: 30px; display: none; }
-        #output-editor { height: 400px; font-family: 'serif'; line-height: 1.8; border: 2px solid var(--primary); }
-        .toolbar { margin-bottom: 5px; text-align: right; }
-        .hint { font-size: 0.85em; color: #666; margin-top: 4px; }
+        input[type="text"] { width: 100%; padding: 14px; border: 2px solid #edeff2; border-radius: 12px; box-sizing: border-box; font-size: 1rem; transition: 0.3s; }
+        input:focus { border-color: var(--primary); outline: none; }
+
+        .genre-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; justify-content: center; }
+        .chip { padding: 8px 16px; border-radius: 50px; background: #f1f2f6; border: none; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
+        .chip.active { background: var(--primary); color: white; font-weight: bold; }
+
+        .display-area { background: #2f3640; color: #dcdde1; padding: 40px 20px; border-radius: 18px; margin-bottom: 20px; min-height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; }
+        #resultText { font-size: 1.1rem; line-height: 1.6; z-index: 1; }
+        .rarity-tag { position: absolute; top: 10px; right: 15px; font-size: 0.7rem; color: var(--accent); font-weight: bold; display: none; }
+
+        .btn-main { width: 100%; background: var(--accent); color: white; padding: 16px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #b33939; transition: 0.1s; margin-bottom: 15px; }
+        .btn-main:active { transform: translateY(4px); box-shadow: none; }
+
+        #finalEdit { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #fffdf0; font-size: 0.9rem; }
+        .copy-hint { text-align: center; font-size: 0.8rem; color: var(--primary); cursor: pointer; margin-top: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>📄 読書感想文 Generator</h1>
-    <p style="font-size: 0.9em; text-align: center; color: #666;">論理的な構成で下書きを作成します。生成後に自由に編集してください。</p>
-
-    <div class="input-group">
-        <label>書籍名</label>
-        <input type="text" id="bookTitle" placeholder="例：人間失格">
+<div class="card">
+    <div class="header">
+        <h1>📚 一行感想ガチャ・極</h1>
+        <div class="count-badge" id="variationCount">100+ 組み合わせ</div>
     </div>
 
     <div class="input-group">
-        <label>自分の専攻・関心事（切り口になります）</label>
-        <input type="text" id="major" placeholder="例：現代心理学、社会学、倫理学など">
+        <input type="text" id="bookTitle" placeholder="タイトル未入力でもOK">
     </div>
 
-    <div class="input-group">
-        <label>特に印象に残ったシーン/一文</label>
-        <textarea id="keyPoint" rows="2" placeholder="例：主人公が「恥の多い生涯を送って来ました」と独白する場面"></textarea>
+    <div class="genre-chips">
+        <button class="chip active" onclick="setGenre('novel', this)">文学</button>
+        <button class="chip" onclick="setGenre('business', this)">ビジネス</button>
+        <button class="chip" onclick="setGenre('academic', this)">学術</button>
+        <button class="chip" onclick="setGenre('life', this)">自己啓発</button>
+        <button class="chip" onclick="setGenre('dark', this)">闇・毒舌</button>
     </div>
 
-    <div class="input-group">
-        <label>文章のトーン</label>
-        <select id="tone">
-            <option value="academic">学術的・論理的</option>
-            <option value="emotional">感性的・内省的</option>
-            <option value="critical">批判的・分析的</option>
-        </select>
+    <div class="display-area">
+        <div class="rarity-tag" id="rarity">SSR: 核心的考察</div>
+        <div id="resultText">本を通して自分が見えてくる。</div>
     </div>
 
-    <button onclick="generateDraft()">下書きを生成する</button>
-
-    <div id="editor-container">
-        <div class="toolbar">
-            <span>文字数: <span id="charCount">0</span>文字</span>
-        </div>
-        <label>エディター（自由に編集・保存できます）</label>
-        <textarea id="output-editor" oninput="updateCharCount()"></textarea>
-        <button onclick="copyToClipboard()" style="background: #27ae60;">文章をコピーする</button>
-    </div>
+    <button class="btn-main" onclick="generate()">ガチャを回す！</button>
+    <input type="text" id="finalEdit" placeholder="編集はこちら" oninput="sync()">
+    <div class="copy-hint" onclick="copy()">クリックでコピー</div>
 </div>
 
 <script>
-    function generateDraft() {
-        const title = document.getElementById('bookTitle').value || "本作品";
-        const major = document.getElementById('major').value || "一般的な視点";
-        const key = document.getElementById('keyPoint').value || "全体の構成";
-        const tone = document.getElementById('tone').value;
+    let currentGenre = 'novel';
 
-        let draft = "";
+    // 組み合わせのパーツ
+    const parts = {
+        novel: {
+            prefix: ["読了後、", "ページを閉じて、", "この物語は、", "気がつけば、", "結局のところ、"],
+            middle: ["${title}という名の迷宮に迷い込んでいた。", "日常の解像度が鮮やかに変わった。", "言語化できない感情を${title}が掬い取ってくれた。", "自意識の檻を破壊されたような衝撃だ。", "鏡のように自分の弱さを映し出していた。"],
+            suffix: ["一生、忘れないだろう。", "これが文学の力か。", "震えが止まらない。", "再読する勇気が必要だ。", "出会えてよかった。"]
+        },
+        business: {
+            prefix: ["本質的に、", "効率を求めるなら、", "「${title}」は、", "この一冊が、", "現代の"],
+            middle: ["思考のOSを根本から書き換える。", "無駄な努力を可視化してくれる。", "生存戦略としての${title}を提示している。", "既成概念を粉砕する破壊力がある。", "停滞していた情熱に火をつけた。"],
+            suffix: ["即、行動に移したい。", "全社会人が読むべきだ。", "視界がクリアになった。", "ゲームチェンジャーだ。", "言い訳はもうできない。"]
+        },
+        academic: {
+            prefix: ["既存のパラダイムにおいて、", "「${title}」が示すのは、", "分析の結果、", "学術的な視点で見れば、", "本作の"],
+            middle: ["多層的な構造が浮き彫りになった。", "論理的整合性と熱量が共存している。", "社会への違和感を${title}が体系化した。", "認識の境界線を拡張してくれる。", "批判的思考の極致を体現している。"],
+            suffix: ["極めて示唆に富む。", "研究の深化を感じる。", "知性のアップデートだ。", "脱帽せざるを得ない。", "議論の出発点だ。"]
+        },
+        life: {
+            prefix: ["無理をして、", "「${title}」は、", "正解のない時代に、", "心の奥底で、", "ふと、"],
+            middle: ["自分のままでいいと許された気がした。", "孤独の飼い方を${title}が教えてくれた。", "見失っていた足元の幸せに気づく。", "「普通」という呪縛を解いてくれる。", "自分を愛する旅のガイドブックだ。"],
+            suffix: ["心が軽くなった。", "救いがあった。", "涙が溢れた。", "今日から変われそうだ。", "優しい読後感。"]
+        },
+        dark: {
+            prefix: ["絶望的な、", "結局、人間は、", "「${title}」という名の、", "吐き気がするほどの、", "醜悪な"],
+            middle: ["エゴイズムをこれでもかと突きつける。", "綺麗事の裏側を暴いてしまった。", "救いようのない虚無がそこにある。", "人間の本性を${title}が剥き出しにした。", "地獄を覗き込むような体験だ。"],
+            suffix: ["震えが止まらない。", "トラウマ級だ。", "見なきゃよかった。", "だが、それがいい。", "呪いのような一冊。"]
+        }
+    };
 
-        // 大学生らしい構成のテンプレート
-        if (tone === 'academic') {
-            draft = `【序論：読解の目的】\n本稿では、${title}を${major}の観点から考察する。本作は単なる文学的価値に留まらず、現代における人間関係のあり方を鋭く示唆している。\n\n` +
-                    `【本論：分析と考察】\n特に印象的だったのは、${key}という要素だ。この場面は、著者が意図した社会への違和感を象徴しているのではないか。${major}の文脈で捉え直すと、個人のアイデンティティがいかに他者との相互作用によって揺らぐかが浮き彫りになる。\n\n` +
-                    `【結論：今後の展望】\n以上の分析より、本作は単なる過去の物語ではなく、現代社会に生きる我々への警鐘であると結論づける。この知見を今後の自身の学びにも反映させていきたい。`;
-        } else if (tone === 'critical') {
-            draft = `【批判的検討】\n${title}を読み解く上で、あえて${major}という批判的枠組みを適用したい。一般的には肯定的に捉えられる本作だが、${key}の部分には論理的な矛盾、あるいは時代の限界が見て取れる。\n\n` +
-                    `なぜ、著者はこのような表現を選択したのか。そこには当時の社会構造が深く関与していると考えられる。現代の視点から再解釈することで、本作の持つ真の課題が見えてくる。`;
-        } else {
-            draft = `【内省的考察】\n${title}を読み進める中で、私は自身の${major}に関する経験を振り返らずにはいられなかった。特に${key}の記述は、私自身の内面にある言葉にできない感情を代弁しているように感じられた。\n\n` +
-                    `この読書体験を通じて得たものは、単なる知識ではなく、自己を客観視するための新しい鏡である。`;
+    function setGenre(genre, btn) {
+        currentGenre = genre;
+        document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    function generate() {
+        const title = document.getElementById('bookTitle').value || "この本";
+        const p = parts[currentGenre];
+        
+        // ランダムにパーツを選択
+        const pre = p.prefix[Math.floor(Math.random() * p.prefix.length)];
+        const mid = p.middle[Math.floor(Math.random() * p.middle.length)];
+        const suf = p.suffix[Math.floor(Math.random() * p.suffix.length)];
+        
+        let result = `${pre}${mid}${suf}`.replace(/\${title}/g, title);
+        
+        // レア演出（5回に1回）
+        const isRare = Math.random() < 0.2;
+        document.getElementById('rarity').style.display = isRare ? 'block' : 'none';
+        if(isRare) {
+            const rareWords = ["【確信】", "【警告】", "【告白】", "【悲報】"];
+            result = rareWords[Math.floor(Math.random()*rareWords.length)] + result;
         }
 
-        document.getElementById('output-editor').value = draft;
-        document.getElementById('editor-container').style.display = 'block';
-        updateCharCount();
-        
-        // 生成場所までスクロール
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        document.getElementById('resultText').innerText = result;
+        document.getElementById('finalEdit').value = result;
     }
 
-    function updateCharCount() {
-        const text = document.getElementById('output-editor').value;
-        document.getElementById('charCount').innerText = text.length;
+    function sync() {
+        document.getElementById('resultText').innerText = document.getElementById('finalEdit').value;
     }
 
-    function copyToClipboard() {
-        const textArea = document.getElementById('output-editor');
-        textArea.select();
+    function copy() {
+        const t = document.getElementById('finalEdit');
+        t.select();
         document.execCommand('copy');
-        alert('クリップボードにコピーしました！');
+        alert("コピーしました！");
     }
 </script>
 
